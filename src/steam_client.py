@@ -7,6 +7,7 @@ STEAM_ID64_RE = re.compile(r"^\d{17}$")
 
 RESOLVE_VANITY_URL = "https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/"
 GET_OWNED_GAMES_URL = "https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/"
+APP_DETAILS_URL = "https://store.steampowered.com/api/appdetails"
 
 
 class SteamProfileError(Exception):
@@ -82,3 +83,32 @@ def get_owned_games(steam_id: str, api_key: str | None = None) -> list[dict]:
         )
 
     return sorted(games, key=lambda game: game.get("playtime_forever", 0), reverse=True)
+
+
+def get_app_tags(appid: int) -> set[str]:
+    """Busca gêneros e categorias de um jogo na Steam Store e devolve como set de tags.
+
+    Devolve um set vazio (em vez de lançar) quando o appid não tem dados na
+    loja (jogo removido, DLC, software), pois isso não deve travar o pipeline
+    de similaridade — só esse jogo fica sem tags.
+    """
+    try:
+        response = requests.get(
+            APP_DETAILS_URL,
+            params={"appids": appid},
+            timeout=10,
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"Aviso: falha ao buscar detalhes do appid {appid}: {exc}")
+        return set()
+
+    payload = response.json().get(str(appid), {})
+    if not payload.get("success"):
+        print(f"Aviso: appid {appid} sem dados na loja Steam (ignorado).")
+        return set()
+
+    data = payload.get("data", {})
+    genres = {g["description"] for g in data.get("genres", [])}
+    categories = {c["description"] for c in data.get("categories", [])}
+    return genres | categories
