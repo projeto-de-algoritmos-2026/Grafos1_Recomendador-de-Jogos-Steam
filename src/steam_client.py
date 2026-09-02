@@ -3,6 +3,8 @@ import re
 
 import requests
 
+import cache
+
 STEAM_ID64_RE = re.compile(r"^\d{17}$")
 
 RESOLVE_VANITY_URL = "https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/"
@@ -91,7 +93,14 @@ def get_app_tags(appid: int) -> set[str]:
     Devolve um set vazio (em vez de lançar) quando o appid não tem dados na
     loja (jogo removido, DLC, software), pois isso não deve travar o pipeline
     de similaridade — só esse jogo fica sem tags.
+
+    Resultado é persistido em /data/cache.json; chamadas seguintes para o
+    mesmo appid não batem na Steam API (rate limit ~200 chamadas/5min).
     """
+    cached = cache.get(appid)
+    if cached is not None:
+        return set(cached)
+
     try:
         response = requests.get(
             APP_DETAILS_URL,
@@ -106,9 +115,12 @@ def get_app_tags(appid: int) -> set[str]:
     payload = response.json().get(str(appid), {})
     if not payload.get("success"):
         print(f"Aviso: appid {appid} sem dados na loja Steam (ignorado).")
+        cache.set(appid, [])
         return set()
 
     data = payload.get("data", {})
     genres = {g["description"] for g in data.get("genres", [])}
     categories = {c["description"] for c in data.get("categories", [])}
-    return genres | categories
+    tags = genres | categories
+    cache.set(appid, sorted(tags))
+    return tags
