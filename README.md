@@ -16,8 +16,23 @@
 
 ## Escopo do grafo
 
-O grafo de recomendação é construído **só sobre a biblioteca do usuário**
-(jogos que ele já possui), não sobre um catálogo maior externo. Nós = appids
-da biblioteca; aresta entre dois jogos existe se `jaccard(tags_a, tags_b) >
-0.1`, com peso `1 - jaccard`. Recomendação, portanto, aponta para jogos que
-o usuário já tem mas talvez não tenha jogado — não para jogos novos.
+Os nós do grafo são a **biblioteca do usuário + um catálogo externo** da loja
+Steam, e a recomendação sempre aponta para um jogo que ele **ainda não tem**.
+O caminho até lá pode passar por jogos da biblioteca — é isso que dá sentido
+ao Dijkstra em vez de só olhar o vizinho mais parecido.
+
+Aresta entre dois jogos existe se `jaccard(tags_a, tags_b) > 0.1`, com peso
+`1 - jaccard` (peso baixo = jogos parecidos).
+
+Duas decisões que a qualidade da recomendação exigiu:
+
+- **Catálogo externo limitado por gênero e vendas.** Buscar os ~200k apps da
+  loja é inviável pelo rate limit do `appdetails` (~200 chamadas/5min). O pool
+  vem da busca da loja filtrada pelos gêneros do jogo de origem e ordenada por
+  mais vendidos. Ordenar por avaliação enche o pool de indie nichado de nota
+  alta, que não serve como recomendação.
+- **Nem toda tag entra no Jaccard.** O `appdetails` mistura, em `categories`,
+  modo de jogo (`Co-op`, `PvP`) com recurso de plataforma e acessibilidade
+  (`Steam Trading Cards`, `Remote Play on TV`, `Stereo Sound`). Só o primeiro
+  grupo indica semelhança: sem esse filtro o CS2 casava com um jogo casual de
+  culinária por ambos terem `Camera Comfort` e `Custom Volume Controls`.
