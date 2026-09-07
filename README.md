@@ -51,7 +51,7 @@ Exemplos de saída real:
 
 ## Vídeo de apresentação
 
-[Apresentação do projeto](assets/apresentacao.mp4) 
+[Apresentação do projeto](https://youtu.be/g9lrJxv680I) 
 
 ## Screenshots
 
