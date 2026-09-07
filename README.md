@@ -1,7 +1,7 @@
 # Recomendador de Jogos da Steam
 
-**Número da Lista**: 2<br>
-**Conteúdo da Disciplina**: Grafos 2<br>
+**Número da Lista**: 1<br>
+**Conteúdo da Disciplina**: Grafos 1<br>
 
 ## Alunos
 
@@ -83,8 +83,8 @@ Pré-requisitos:
 Comandos:
 
 ```bash
-git clone https://github.com/projeto-de-algoritmos-2026/Grafos2_Recomendador-de-Jogos-Steam
-cd Grafos2_Recomendador-de-Jogos-Steam
+git clone https://github.com/projeto-de-algoritmos-2026/Grafos1_Recomendador-de-Jogos-Steam
+cd Grafos1_Recomendador-de-Jogos-Steam
 
 python -m venv venv
 venv\Scripts\activate        # Windows
