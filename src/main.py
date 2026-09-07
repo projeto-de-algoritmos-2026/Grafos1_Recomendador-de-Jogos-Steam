@@ -5,9 +5,11 @@ from dotenv import load_dotenv
 from graph import build_graph, dijkstra
 from steam_client import (
     STEAM_GENRES,
+    STORE_SORTS,
     SteamProfileError,
     detect_local_steam_account,
     get_app_tags,
+    get_apps_tags,
     get_owned_games,
     get_store_candidates,
     resolve_steam_id,
@@ -95,6 +97,22 @@ def prompt_num_recommendations(available_games: int, default: int = 5) -> int:
         return n
 
 
+def prompt_store_sort() -> str:
+    """Pergunta como ordenar o catálogo da loja de onde saem os candidatos."""
+    options = list(STORE_SORTS)
+    print("\nOrdenar catálogo da loja por:")
+    for index, label in enumerate(options, start=1):
+        print(f"{index}. {label}")
+
+    while True:
+        raw = input(f"Escolha (1-{len(options)}, padrão: 1): ").strip()
+        if raw == "":
+            return options[0]
+        if raw.isdigit() and 1 <= int(raw) <= len(options):
+            return options[int(raw) - 1]
+        print(f"Entrada inválida. Digite um número entre 1 e {len(options)}.")
+
+
 def build_recommendations(
     games: list[dict], candidates: list[dict], source_appid: int, n: int
 ) -> list[dict]:
@@ -108,7 +126,9 @@ def build_recommendations(
     owned = {game["appid"] for game in games}
     nodes = games + candidates
 
-    games_tags = {node["appid"]: get_app_tags(node["appid"]) for node in nodes}
+    print(f"Buscando tags de {len(nodes)} jogos...")
+    games_tags = get_apps_tags([node["appid"] for node in nodes])
+
     adjacency = build_graph(games_tags)
     distances = dijkstra(adjacency, source_appid)
 
@@ -166,19 +186,22 @@ def main():
     source_appid = prompt_source_game(games)
     print(f"Jogo de origem escolhido: appid {source_appid}")
 
+    sort = prompt_store_sort()
+
     owned = {game["appid"] for game in games}
     source_genres = get_app_tags(source_appid) & STEAM_GENRES
     candidates = [
-        c for c in get_store_candidates(source_genres) if c["appid"] not in owned
+        c
+        for c in get_store_candidates(source_genres, sort=sort)
+        if c["appid"] not in owned
     ]
     print(
-        f"Catálogo da loja ({', '.join(sorted(source_genres)) or 'geral'}): "
-        f"{len(candidates)} jogos que você ainda não tem."
+        f"Catálogo da loja ({', '.join(sorted(source_genres)) or 'geral'}, "
+        f"{sort}): {len(candidates)} jogos que você ainda não tem."
     )
 
     n = prompt_num_recommendations(len(candidates))
     print(f"Número de recomendações: {n}")
-    print("Buscando gêneros e categorias (pode demorar na primeira vez)...")
 
     recommendations = build_recommendations(games, candidates, source_appid, n)
     links = print_recommendations(recommendations)
