@@ -51,9 +51,7 @@ Exemplos de saída real:
 
 ## Vídeo de apresentação
 
-[Apresentação do projeto](assets/apresentacao.mp4) — 4min54, com demonstração do
-programa em execução e explicação do grafo, da similaridade de Jaccard e do
-Dijkstra.
+[Apresentação do projeto](assets/apresentacao.mp4) 
 
 ## Screenshots
 
